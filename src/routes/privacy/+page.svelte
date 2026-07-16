@@ -162,6 +162,28 @@
     </section>
 
     <section>
+      <h2>Messaging</h2>
+      <p>
+        Direct messages between friends are stored in our database and are protected by
+        the same access controls as the rest of your data — only you and the recipient can
+        read a conversation through the app.
+      </p>
+      <p>
+        Messages are <strong>not currently end-to-end encrypted</strong>. This means that,
+        in principle, they could be read by someone with direct database access (such as
+        Hyllah's operator, under the safeguards described elsewhere in this policy) rather
+        than only by sender and recipient. End-to-end encryption, where messages are
+        unreadable to anyone but the two people in the conversation, is on our roadmap. We
+        wanted to be upfront about where things stand today rather than let our
+        privacy-first framing imply more than is currently true.
+      </p>
+      <p>
+        Please avoid sending highly sensitive personal information over Hyllah messages
+        until end-to-end encryption ships.
+      </p>
+    </section>
+
+    <section>
       <h2>Cookies</h2>
       <p>
         We use only essential cookies required for authentication (your login session).

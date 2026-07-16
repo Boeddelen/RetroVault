@@ -38,7 +38,7 @@
 
       <p class="lede">
         Catalog your vinyl, CDs, cassettes, and rarities. Track what you paid and what they're worth.
-        Own your data — sync if you want, self-host if you prefer.
+        Own your data, exportable any time.
       </p>
 
       <div class="cta-row">
@@ -138,9 +138,9 @@
           <a href="/support">Tip jar</a>
         </div>
         <div class="footer-col">
-          <div class="footer-label">Open source</div>
-          <a href="https://github.com/Boeddelen/Hyllah" target="_blank" rel="noopener">GitHub</a>
-          <a href="/self-host">Self-host</a>
+          <div class="footer-label">Contact</div>
+          <a href="mailto:hello@hyllah.com">hello@hyllah.com</a>
+          <a href="mailto:privacy@hyllah.com">privacy@hyllah.com</a>
         </div>
         <div class="footer-col">
           <div class="footer-label">Legal</div>

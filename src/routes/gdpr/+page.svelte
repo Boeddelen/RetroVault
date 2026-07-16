@@ -63,10 +63,9 @@
     <section>
       <h2>Right to data portability</h2>
       <p>
-        You can export your collection and account data in a portable JSON format from your
-        settings page (coming soon — for now, email us). The format is documented in our
-        <a href="https://github.com/Boeddelen/Hyllah" target="_blank" rel="noopener">open-source repository</a>
-        so you can import it into other tools.
+        You can export your collection and account data in a portable JSON format any time
+        from Settings → "Download a copy," so you can back up your data or bring it to
+        another tool.
       </p>
     </section>
 

@@ -56,21 +56,11 @@
       <div class="alt-eyebrow">Other ways to help</div>
       <ul>
         <li>
-          <strong>Star the repo</strong> on
-          <a href="https://github.com/Boeddelen/Hyllah" target="_blank" rel="noopener">GitHub</a>.
-          Helps others find the project.
-        </li>
-        <li>
           <strong>Tell a friend</strong> who collects records. Word of mouth is everything.
         </li>
         <li>
-          <strong>Report bugs and request features</strong> via
-          <a href="https://github.com/Boeddelen/Hyllah/issues" target="_blank" rel="noopener">
-            GitHub Issues
-          </a>.
-        </li>
-        <li>
-          <strong>Self-host it</strong> if you'd rather run your own copy. The code is open.
+          <strong>Report bugs and request features</strong> — email us at
+          <a href="mailto:hello@hyllah.com">hello@hyllah.com</a>.
         </li>
       </ul>
     </div>

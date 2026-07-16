@@ -23,10 +23,8 @@
     <section>
       <h2>What Hyllah is</h2>
       <p>
-        Hyllah is a free, open-source web service for cataloging music collections. It is
-        operated by Frederik Flakne, a private individual based in Norway. You can find the source
-        code at <a href="https://github.com/Boeddelen/Hyllah" target="_blank" rel="noopener">github.com/Boeddelen/Hyllah</a>
-        under the MIT License.
+        Hyllah is a web service for cataloging music collections, operated by Frederik Flakne,
+        a private individual based in Norway.
       </p>
     </section>
 

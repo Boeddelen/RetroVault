@@ -2,8 +2,8 @@
   "name": "hyllah",
   "version": "0.1.0",
   "description": "Open-source music collection manager",
-  "private": false,
-  "license": "MIT",
+  "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
