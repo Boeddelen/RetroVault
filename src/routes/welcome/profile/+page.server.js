@@ -1,6 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-
-const USERNAME_RE = /^[a-z0-9_-]{3,30}$/;
+import { checkUsernameCandidate } from '$lib/server/username.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals: { safeGetSession, supabase } }) => {
@@ -50,9 +49,17 @@ export const actions = {
     // profile later). Validate it only if provided.
     let usernameToSave = null;
     if (usernameInput) {
-      if (!USERNAME_RE.test(usernameInput)) {
+      const check = checkUsernameCandidate(usernameInput);
+      if (!check.ok && check.reason === 'format') {
         return fail(400, {
           error: 'Handle must be 3–30 characters: lowercase letters, numbers, dashes or underscores.',
+          displayName,
+          usernameInput
+        });
+      }
+      if (!check.ok && check.reason === 'reserved') {
+        return fail(400, {
+          error: 'That handle is reserved. Please pick another.',
           displayName,
           usernameInput
         });

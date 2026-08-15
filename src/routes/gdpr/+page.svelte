@@ -31,8 +31,7 @@
       <p>
         You have the right to know what personal data we hold about you. You can see most of it
         directly in your account settings. For a complete machine-readable export of everything,
-        use the <strong>"Export my data"</strong> button on your settings page (coming soon — for
-        now, email us).
+        use the <strong>"Export my data"</strong> button on your settings page.
       </p>
     </section>
 

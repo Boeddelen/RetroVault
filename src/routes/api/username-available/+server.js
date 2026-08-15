@@ -9,33 +9,7 @@
 // Used by the Settings → Profile form for the debounced live check.
 
 import { error, json } from '@sveltejs/kit';
-
-// Anything that could collide with current or future routes / common
-// "admin-y" handles. The list is deliberately conservative — better to
-// reject too many than to give away "admin" or "api".
-//
-// Lowercase only (since usernames are lowercase per the format constraint).
-const RESERVED_USERNAMES = new Set([
-  // Routes (current + reserved for future)
-  'admin', 'administrator', 'api', 'app', 'auth', 'login', 'logout', 'signup',
-  'signout', 'register', 'settings', 'account', 'profile', 'u', 'user', 'users',
-  'help', 'support', 'contact', 'about', 'pricing', 'home', 'feed', 'dashboard',
-  'stats', 'collection', 'collections', 'records', 'record', 'discogs',
-  'callback', 'connect', 'disconnect', 'all', 'archive', 'archived', 'tags',
-  // Legal / operational
-  'terms', 'privacy', 'gdpr', 'legal', 'cookies', 'security', 'abuse',
-  'dmca', 'tos', 'eula', 'imprint',
-  // Generic
-  'www', 'mail', 'email', 'webmail', 'ftp', 'ssh', 'root', 'system',
-  'public', 'private', 'official', 'staff', 'team', 'mod', 'moderator',
-  'bot', 'noreply', 'no-reply', 'donotreply', 'do-not-reply',
-  // Brand (current + legacy, kept blocked to prevent impersonation)
-  'hyllah', 'hylla', 'retrovault', 'retro-vault', 'retro_vault', 'vault', 'anthropic',
-  // Inflammatory / impersonation magnets — keep these blocked
-  'null', 'undefined', 'anonymous', 'me', 'you'
-]);
-
-const USERNAME_RE = /^[a-z0-9_-]{3,30}$/;
+import { checkUsernameCandidate } from '$lib/server/username.js';
 
 /** @type {import('./$types').RequestHandler} */
 export const GET = async ({ url, locals: { safeGetSession, supabase } }) => {
@@ -46,11 +20,9 @@ export const GET = async ({ url, locals: { safeGetSession, supabase } }) => {
   if (!raw) {
     return json({ available: false, reason: 'empty' });
   }
-  if (!USERNAME_RE.test(raw)) {
-    return json({ available: false, reason: 'format' });
-  }
-  if (RESERVED_USERNAMES.has(raw)) {
-    return json({ available: false, reason: 'reserved' });
+  const check = checkUsernameCandidate(raw);
+  if (!check.ok) {
+    return json({ available: false, reason: check.reason });
   }
 
   // Look up via case-insensitive comparison. We index on lower(username),

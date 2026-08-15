@@ -2,6 +2,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import { getRequestToken } from '$lib/server/discogs.js';
 import { PUBLIC_APP_URL } from '$env/static/public';
 import { SUPPORTED_CURRENCIES } from '$lib/currency.js';
+import { checkUsernameCandidate } from '$lib/server/username.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ url }) => {
@@ -15,24 +16,6 @@ export const load = async ({ url }) => {
   };
 };
 
-// Same reserved list as the username-available endpoint. Kept in sync by hand
-// since the two are tiny; a shared module is overkill for ~50 strings.
-const RESERVED_USERNAMES = new Set([
-  'admin', 'administrator', 'api', 'app', 'auth', 'login', 'logout', 'signup',
-  'signout', 'register', 'settings', 'account', 'profile', 'u', 'user', 'users',
-  'help', 'support', 'contact', 'about', 'pricing', 'home', 'feed', 'dashboard',
-  'stats', 'collection', 'collections', 'records', 'record', 'discogs',
-  'callback', 'connect', 'disconnect', 'all', 'archive', 'archived', 'tags',
-  'terms', 'privacy', 'gdpr', 'legal', 'cookies', 'security', 'abuse',
-  'dmca', 'tos', 'eula', 'imprint',
-  'www', 'mail', 'email', 'webmail', 'ftp', 'ssh', 'root', 'system',
-  'public', 'private', 'official', 'staff', 'team', 'mod', 'moderator',
-  'bot', 'noreply', 'no-reply', 'donotreply', 'do-not-reply',
-  'hyllah', 'retro-vault', 'retro_vault', 'vault', 'anthropic',
-  'null', 'undefined', 'anonymous', 'me', 'you', 'hyllah', 'frederik', 'flakne', 'fuck', 'satan', 'god', 'g0d',
-  'crappyslarre'
-]);
-const USERNAME_RE = /^[a-z0-9_-]{3,30}$/;
 
 /**
  * Actions live on the settings page itself — no cross-route posting.
@@ -156,11 +139,12 @@ export const actions = {
     // ── Username validation ────────────────────────────────────────
     let username = null;
     if (usernameRaw) {
-      if (!USERNAME_RE.test(usernameRaw)) {
+      const check = checkUsernameCandidate(usernameRaw);
+      if (!check.ok && check.reason === 'format') {
         throw redirect(303, '/app/settings?profile=error&profile_err=' +
           encodeURIComponent('Username must be 3–30 characters: lowercase letters, numbers, dash, underscore.'));
       }
-      if (RESERVED_USERNAMES.has(usernameRaw)) {
+      if (!check.ok && check.reason === 'reserved') {
         throw redirect(303, '/app/settings?profile=error&profile_err=' +
           encodeURIComponent('That username is reserved. Please pick another.'));
       }

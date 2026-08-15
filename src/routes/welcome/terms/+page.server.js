@@ -1,4 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { createClient } from '@supabase/supabase-js';
 import { CURRENT_TOS_VERSION } from '$lib/server/legal.js';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -74,6 +77,39 @@ export const actions = {
     if (!updated) {
       console.error('[welcome/terms] update matched no row for user (after retry):', user.id);
       return fail(500, { error: 'Could not save your acceptance — please try again.' });
+    }
+
+    // Mirror the acceptance into auth.users' app_metadata, purely so it's
+    // visible in Supabase Dashboard → Authentication → Users without a SQL
+    // query. public.users (above) remains the single source of truth — if
+    // these two ever disagree, public.users wins. app_metadata (unlike
+    // user_metadata) can ONLY be written via the service-role key, never by
+    // the signed-in user's own client calls, so it stays a trustworthy
+    // audit mirror rather than something a user could quietly edit.
+    //
+    // Best-effort: if this fails or the key isn't configured, the user's
+    // actual acceptance above already succeeded and isn't affected — we
+    // only log it, never fail the request over a dashboard convenience.
+    const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+      try {
+        const admin = createClient(PUBLIC_SUPABASE_URL, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+        const { error: metaErr } = await admin.auth.admin.updateUserById(user.id, {
+          app_metadata: {
+            tos_accepted_at: new Date().toISOString(),
+            tos_version: CURRENT_TOS_VERSION
+          }
+        });
+        if (metaErr) {
+          console.error('[welcome/terms] app_metadata mirror failed:', metaErr.message);
+        }
+      } catch (err) {
+        console.error('[welcome/terms] app_metadata mirror threw:', err);
+      }
+    } else {
+      console.warn('[welcome/terms] SUPABASE_SERVICE_ROLE_KEY not set — skipping dashboard mirror');
     }
 
     throw redirect(303, updated.display_name ? '/app/all' : '/welcome/profile');
