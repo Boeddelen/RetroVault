@@ -45,6 +45,13 @@ export const RESERVED_USERNAMES = new Set([
  * themselves, since "is this taken" logic differs slightly by context (e.g.
  * "available to me because it's already mine" vs. a fresh pick).
  *
+ * Callers should treat 'reserved' the same as 'taken' when messaging the
+ * user — show one generic "not available" message for both, never naming
+ * which. Distinguishing them to the user would reveal which words are
+ * system-reserved (useful reconnaissance for an attacker) versus genuinely
+ * registered by someone else. 'format' stays specific since it's just
+ * helping a user fix a typo, not a security-relevant distinction.
+ *
  * @param {string} raw - already trimmed + lowercased
  * @returns {{ ok: true } | { ok: false, reason: 'format' | 'reserved' }}
  */

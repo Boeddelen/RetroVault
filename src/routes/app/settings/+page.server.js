@@ -145,8 +145,11 @@ export const actions = {
           encodeURIComponent('Username must be 3–30 characters: lowercase letters, numbers, dash, underscore.'));
       }
       if (!check.ok && check.reason === 'reserved') {
+        // Deliberately the same generic message as the "taken" case below —
+        // never reveal whether a handle was blocked because it's reserved
+        // vs. already registered by someone else.
         throw redirect(303, '/app/settings?profile=error&profile_err=' +
-          encodeURIComponent('That username is reserved. Please pick another.'));
+          encodeURIComponent('This handle is not available. Please pick another one.'));
       }
       // Uniqueness — case-insensitive
       const { data: collision } = await supabase
@@ -156,7 +159,7 @@ export const actions = {
         .maybeSingle();
       if (collision && collision.id !== user.id) {
         throw redirect(303, '/app/settings?profile=error&profile_err=' +
-          encodeURIComponent('That username is taken.'));
+          encodeURIComponent('This handle is not available. Please pick another one.'));
       }
       username = usernameRaw;
     }

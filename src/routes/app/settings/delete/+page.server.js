@@ -10,19 +10,29 @@
 //   2. Delete the public.users row — Postgres cascades through every owned
 //      record, collection, junction row, track via FOREIGN KEY ... ON DELETE
 //      CASCADE relationships already in place
-//   3. Delete the auth.users row via the Admin API, using the service-role
+//   3. Delete uploaded files (covers + avatar) from Storage — see note below
+//   4. Delete the auth.users row via the Admin API, using the service-role
 //      key. This is the one place in the codebase we need that key.
-//   4. Sign the session out
-//   5. Redirect to landing with ?deleted=1 so we can show a confirmation
+//   5. Sign the session out
+//   6. Redirect to landing with ?deleted=1 so we can show a confirmation
 //
-// We deliberately do NOT delete Storage files in this transaction (user
-// asked for orphans to be swept later). Storage cleanup is on the side-item
-// list as a periodic job.
+// Storage cleanup (step 3) — history worth recording:
+//   This used to be deferred to "a periodic job that sweeps orphans later,"
+//   but that job was never actually built — meaning deleted users' files
+//   persisted in Storage indefinitely, not "for a short period" as the
+//   confirmation page used to (incorrectly) tell users. Since both the
+//   `covers` and `avatars` buckets store files under a per-user folder
+//   (`{bucket}/{userId}/...`, enforced by the bucket's own RLS policy),
+//   a full synchronous sweep is simple: list the folder, delete everything
+//   in it, using the same admin client already needed for auth.users below.
+//   This is both more accurate to promise to users and closer to what GDPR
+//   erasure expects — actual removal, not an indefinite maybe.
 //
-// Why use the service role for auth.users only:
+// Why use the service role for auth.users AND storage:
 //   - The user can't delete their own auth.users row through the public
 //     Supabase client — that's by design
-//   - The service-role key bypasses RLS and CAN delete auth rows
+//   - The service-role key bypasses RLS and CAN delete auth rows + any
+//     user's storage files (not just their own uploads via the public client)
 //   - It's read ONLY in this single file, never sent to the client, and
 //     pulled from a Cloudflare encrypted runtime secret
 // ─────────────────────────────────────────────────────────────────────────
@@ -33,6 +43,41 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
 
 const REQUIRED_PHRASE = 'delete my account';
+
+/**
+ * Delete every file this user has uploaded, across both storage buckets.
+ * Both buckets store files under a per-user folder (`{bucket}/{userId}/...`,
+ * enforced by the bucket's RLS policy requiring the path to start with the
+ * uploader's own id), so a full sweep is just: list the folder, delete
+ * everything found. Runs with the admin client since deleting another
+ * user's-eye-view files isn't something the public client can do anyway —
+ * here it's the same user's own files, but we're past their own session by
+ * this point in the deletion flow.
+ *
+ * Failure here is logged but never blocks the rest of deletion — a stray
+ * orphaned file is a minor ops cleanup item, not a reason to leave a user
+ * account half-deleted.
+ */
+async function sweepUserStorage(admin, userId) {
+  for (const bucket of ['covers', 'avatars']) {
+    try {
+      const { data: files, error: listErr } = await admin.storage.from(bucket).list(userId, { limit: 1000 });
+      if (listErr) {
+        console.error(`[account delete] storage list failed for ${bucket}/${userId}:`, listErr.message);
+        continue;
+      }
+      if (!files || files.length === 0) continue;
+
+      const paths = files.map((f) => `${userId}/${f.name}`);
+      const { error: removeErr } = await admin.storage.from(bucket).remove(paths);
+      if (removeErr) {
+        console.error(`[account delete] storage remove failed for ${bucket}/${userId}:`, removeErr.message);
+      }
+    } catch (err) {
+      console.error(`[account delete] storage sweep threw for ${bucket}/${userId}:`, err);
+    }
+  }
+}
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals: { safeGetSession, supabase } }) => {
@@ -76,9 +121,10 @@ export const actions = {
    * Steps in order:
    *   1. Validate the typed phrase server-side
    *   2. Delete public.users (cascades to all the user's owned rows via FKs)
-   *   3. Delete auth.users via the admin client (service-role key)
-   *   4. Sign out the session
-   *   5. Redirect to / with ?deleted=1
+   *   3. Delete uploaded covers + avatar from Storage (best-effort)
+   *   4. Delete auth.users via the admin client (service-role key)
+   *   5. Sign out the session
+   *   6. Redirect to / with ?deleted=1
    */
   confirm: async ({ request, locals: { safeGetSession, supabase } }) => {
     const { user } = await safeGetSession();
@@ -122,6 +168,11 @@ export const actions = {
         error: 'Could not delete account data. Please try again or contact support.'
       });
     }
+
+    // ── 3.5. Delete uploaded files (covers + avatar) ─────────────────
+    // Best-effort — see sweepUserStorage's own comment for why a failure
+    // here never blocks the rest of deletion.
+    await sweepUserStorage(admin, user.id);
 
     // ── 4. Delete the auth.users row ────────────────────────────────
     // This is the irreversible step. If it fails here, the user already has

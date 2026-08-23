@@ -58,8 +58,11 @@ export const actions = {
         });
       }
       if (!check.ok && check.reason === 'reserved') {
+        // Deliberately the same generic message as the "taken" case below —
+        // never reveal whether a handle was blocked because it's reserved
+        // vs. already registered by someone else.
         return fail(400, {
-          error: 'That handle is reserved. Please pick another.',
+          error: 'This handle is not available. Please pick another one.',
           displayName,
           usernameInput
         });
@@ -73,7 +76,7 @@ export const actions = {
         .maybeSingle();
       if (existing) {
         return fail(409, {
-          error: 'That handle is already taken — try another.',
+          error: 'This handle is not available. Please pick another one.',
           displayName,
           usernameInput
         });

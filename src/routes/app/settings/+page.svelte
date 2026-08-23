@@ -37,7 +37,7 @@
   let savingPublicTheme = $state(false);
 
   // Username availability check (debounced)
-  let usernameStatus = $state('idle');   // 'idle' | 'checking' | 'available' | 'taken' | 'reserved' | 'format'
+  let usernameStatus = $state('idle');   // 'idle' | 'checking' | 'available' | 'unavailable' | 'format'
   let usernameDebounce;
 
   function onUsernameInput() {
@@ -67,9 +67,8 @@
       }
       const body = await res.json();
       if (body.available) usernameStatus = 'available';
-      else if (body.reason === 'taken') usernameStatus = 'taken';
-      else if (body.reason === 'reserved') usernameStatus = 'reserved';
-      else usernameStatus = 'format';
+      else if (body.reason === 'format') usernameStatus = 'format';
+      else usernameStatus = 'unavailable';
     } catch {
       usernameStatus = 'idle';
     }
@@ -269,8 +268,7 @@
               <span class="username-status status-{usernameStatus}">
                 {#if usernameStatus === 'checking'}…
                 {:else if usernameStatus === 'available'}✓
-                {:else if usernameStatus === 'taken'}taken
-                {:else if usernameStatus === 'reserved'}reserved
+                {:else if usernameStatus === 'unavailable'}unavailable
                 {:else if usernameStatus === 'format'}invalid
                 {/if}
               </span>
@@ -343,7 +341,7 @@
           <button
             type="submit"
             class="btn primary"
-            disabled={savingProfile || usernameStatus === 'taken' || usernameStatus === 'reserved' || usernameStatus === 'format'}
+            disabled={savingProfile || usernameStatus === 'unavailable' || usernameStatus === 'format'}
           >
             {savingProfile ? 'Saving…' : 'Save profile'}
           </button>
@@ -1305,8 +1303,7 @@
     color: var(--ink-3);
   }
   .status-available { color: var(--success); }
-  .status-taken,
-  .status-reserved,
+  .status-unavailable,
   .status-format { color: var(--danger); }
 
   /* Toggle fields (public, show values) */

@@ -80,9 +80,7 @@
       </p>
 
       <p class="lede serious">
-        Uploaded cover images may remain in storage for a short period before they're cleaned up.
-        Nothing in them is publicly accessible without your account, but if that matters to you,
-        export your data first and let us know.
+        Uploaded cover images and your avatar are deleted immediately, along with everything else above.
       </p>
 
       <p class="lede">
